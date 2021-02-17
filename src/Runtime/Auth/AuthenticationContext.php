@@ -16,27 +16,27 @@ class AuthenticationContext implements IAuthenticationContext
     /**
      * @var BaseTokenProvider
      */
-    private $provider;
+    protected $provider;
 
     /**
      * @var string
      */
-    private $authorityUrl;
+    protected $authorityUrl;
 
     /**
      * @var callable|null
      */
-    private $acquireToken;
+    protected $acquireToken;
 
     /**
      * @var array
      */
-    private $accessToken;
+    protected $accessToken;
 
     /**
      * @var array
      */
-    private $authCookies;
+    protected $authCookies;
 
 
     /**
