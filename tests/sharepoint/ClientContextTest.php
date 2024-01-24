@@ -38,7 +38,7 @@ class ClientContextTest extends SharePointTestCase
             self::assertFalse(self::$context->hasPendingRequest());
         } catch (Exception $e) {
             self::assertTrue(self::$context->hasPendingRequest());
-            self::$context->getPendingRequest()->clearActions();
+            self::$context->clearActions();
         }
     }
 
@@ -46,20 +46,20 @@ class ClientContextTest extends SharePointTestCase
     public function testBuildGetRequest(){
         $request = self::$context->getWeb()->getCurrentUser()->get()->buildRequest();
         self::assertInstanceOf(RequestOptions::class, $request);
-        self::$context->getPendingRequest()->clearActions();
+        self::$context->clearActions();
     }
 
 
     public function testBuildUpdateRequest(){
         $request = self::$context->getWeb()->getCurrentUser()->update()->buildRequest();
         self::assertInstanceOf(RequestOptions::class, $request);
-        self::$context->getPendingRequest()->clearActions();
+        self::$context->clearActions();
     }
 
     public function testBuildDeleteRequest(){
         $request = self::$context->getWeb()->deleteObject()->buildRequest();
         self::assertInstanceOf(RequestOptions::class, $request);
-        self::$context->getPendingRequest()->clearActions();
+        self::$context->clearActions();
     }
 
 
@@ -73,22 +73,17 @@ class ClientContextTest extends SharePointTestCase
 
 
     public function testEnsureNavigationProperty(){
-        $web = self::$context->getWeb();
-        $web->ensureProperty("CurrentUser");
-        self::$context->executeQuery();
+        $web = self::$context->getWeb()->ensureProperty("CurrentUser")->executeQuery();
         self::assertTrue($web->isPropertyAvailable("CurrentUser"));
     }
 
 
     public function testInitClientFromAbsUrl(){
-        $settings = include(__DIR__ . '/../../Settings.php');
-        $pageAbsUrl = $settings["Url"] . "/sites/team/SitePages/Home.aspx";
-        $credentials = new UserCredentials($settings['UserName'],$settings['Password']);
+        $pageAbsUrl = self::$settings["Url"] . "/sites/team/SitePages/Home.aspx";
+        $credentials = new UserCredentials(self::$settings['UserName'],self::$settings['Password']);
         $ctx = ClientContext::fromUrl($pageAbsUrl)->withCredentials($credentials);
-        $whoami = $ctx->getWeb()->getCurrentUser();
-        $ctx->load($whoami);
-        $ctx->executeQuery();
-        self::assertNotEmpty($whoami->getEmail());
+        $me = $ctx->getWeb()->getCurrentUser()->get()->executeQuery();
+        self::assertNotEmpty($me->getEmail());
     }
 
 }

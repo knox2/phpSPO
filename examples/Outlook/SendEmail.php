@@ -1,47 +1,33 @@
 <?php
 
 
-use Office365\OutlookServices\BodyType;
-use Office365\OutlookServices\EmailAddress;
-use Office365\OutlookServices\ItemBody;
-use Office365\OutlookServices\OutlookClient;
-use Office365\OutlookServices\Recipient;
-use Office365\Runtime\Auth\AuthenticationContext;
+
+use Office365\GraphServiceClient;
+use Office365\Outlook\BodyType;
+use Office365\Outlook\EmailAddress;
+use Office365\Outlook\ItemBody;
+use Office365\Outlook\Messages\Message;
+use Office365\Runtime\Auth\AADTokenProvider;
 use Office365\Runtime\Auth\UserCredentials;
 
-
 require_once '../vendor/autoload.php';
-$settings = include('../../Settings.php');
 
-function acquireToken(AuthenticationContext $authCtx,$clientId,$userName,$password)
+function acquireToken()
 {
-    $resource = "https://outlook.office365.com";
-    try {
-        $authCtx->acquireTokenForPassword($resource,
-            $clientId,
-            new UserCredentials($userName, $password));
-    } catch (Exception $e) {
-        print("Failed to acquire token");
-    }
+    $resource = "https://graph.microsoft.com";
+    $settings = include('../../tests/Settings.php');
+    $provider = new AADTokenProvider($settings['TenantName']);
+    return $provider->acquireTokenForPassword($resource, $settings['ClientId'],
+        new UserCredentials($settings['UserName'], $settings['Password']));
 }
 
-try {
-    $client = new OutlookClient($settings['TenantName'],function (AuthenticationContext $authCtx) use($settings) {
-        acquireToken($authCtx,$settings['ClientId'],$settings['UserName'], $settings['Password']);
-        //$authCtx->setAccessToken("--access token goes here--");
-    });
-    $message = $client->getMe()->getMessages()->createMessage();
-    $message->Subject = "Meet for lunch?";
-    $message->Body = new ItemBody(BodyType::Text,"The new cafeteria is open.");
-    $message->ToRecipients = array(
-        new Recipient(new EmailAddress(null,"vgrem@mediadev8.onmicrosoft.com"))
-    );
-    $client->getMe()->sendEmail($message,true);
-    $client->executeQuery();
+$client = new GraphServiceClient("acquireToken");
 
-}
-catch (Exception $e) {
-    echo 'Authentication failed: ',  $e->getMessage(), "\n";
-}
+/** @var Message $message */
+$message = $client->getMe()->getMessages()->createType();
+$message->setSubject("Meet for lunch?");
+$message->setBody(new ItemBody(BodyType::Text,"The new cafeteria is open."));
+$message->setToRecipients([new EmailAddress(null,"vgrem@mediadev8.onmicrosoft.com")]);
+$client->getMe()->sendEmail($message,false)->executeQuery();
 
 

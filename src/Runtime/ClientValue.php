@@ -9,42 +9,53 @@ namespace Office365\Runtime;
 class ClientValue
 {
 
-    /**
-     * @param string $typeName
-     */
-    public function __construct($typeName = null)
+    public function __construct()
     {
-        $this->typeName = $typeName;
     }
+
     /**
      * @param string $name
      * @param mixed $value
+     * @return $this
      */
     function setProperty($name, $value)
     {
-        $this->{$name} = $value;
+        $name = ucfirst($name);
+        if(property_exists($this,$name)) {
+            $childProperty = $this->getProperty($name);
+            if($childProperty instanceof ClientValue){
+                foreach ($value as $k=>$v){
+                    $childProperty->setProperty($k,$v);
+                }
+                $this->{$name} = $childProperty;
+            }
+            else
+                $this->{$name} = $value;
+        }
+        else
+            $this->{$name} = $value;
+        return $this;
     }
 
     /**
      * @param string $name
+     * @param mixed|null $defaultValue
      * @return mixed
      */
-    public function getProperty($name)
+    public function getProperty($name, $defaultValue=null)
     {
-        return $this->{$name};
+        if(isset($this->{$name}))
+            return $this->{$name};
+        return $defaultValue;
     }
 
 
     /**
-     * @return mixed|string
+     * @return ServerTypeInfo
      */
-    public function getServerTypeName()
+    public function getServerTypeInfo()
     {
-        if(!isset($this->typeName)){
-            $typeInfo = explode("\\",get_class($this));
-            $this->typeName =  end($typeInfo);
-        }
-        return $this->typeName;
+        return ServerTypeInfo::resolve($this);
     }
 
     /**
@@ -52,31 +63,12 @@ class ClientValue
      */
     function toJson()
     {
-        $payload = array();
+        $json = array();
         foreach (get_object_vars($this) as $key => $val) {
-            if ($key != 'typeName' && !is_null($val))
-                $payload[$key] = $val;
+            if (!is_null($val))
+                $json[$key] = $val;
         }
-        return $payload;
+        return $json;
     }
-
-    /**
-     * @return bool
-     */
-    function getServerObjectIsNull()
-    {
-        return !is_null($this->typeName);
-    }
-
-
-    /**
-     * @var ClientRuntimeContext
-     */
-    private $context;
-
-    /**
-     * @var $typeName string
-     */
-    private $typeName;
 
 }

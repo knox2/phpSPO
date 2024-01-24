@@ -1,19 +1,56 @@
 <?php
 
 namespace Office365\Runtime;
+use ArrayAccess;
 use Exception;
 use Generator;
 use IteratorAggregate;
 use Office365\Runtime\Http\RequestOptions;
-use Office365\Runtime\OData\JsonLightFormat;
-use Office365\Runtime\OData\ODataQueryOptions;
+use Office365\Runtime\OData\V3\JsonLightFormat;
+use Office365\Runtime\Types\EventHandler;
 use Traversable;
+
+
+class PageInfo {
+
+    public function __construct()
+    {
+        $this->startIndex = 0;
+        $this->endIndex = 0;
+    }
+
+    public function setNextPage($index){
+        if($index == 0)
+            return;
+
+        if($this->endIndex < $index){
+            $this->startIndex = $this->endIndex;
+            $this->endIndex = $index;
+        }
+    }
+
+    public function __toString()
+    {
+        return "$this->endIndex";
+    }
+
+    /**
+     * @var int
+     */
+    public $startIndex;
+
+    /**
+     * @var int
+     */
+    public $endIndex;
+
+}
 
 
 /**
  * Client objects collection (represents EntitySet in terms of OData)
  */
-class ClientObjectCollection extends ClientObject implements IteratorAggregate
+class ClientObjectCollection extends ClientObject implements IteratorAggregate, ArrayAccess
 {
 
     /**
@@ -28,16 +65,41 @@ class ClientObjectCollection extends ClientObject implements IteratorAggregate
 
 
     /**
-     * ClientObjectCollection constructor.
+     * @var string
+     */
+    protected $itemTypeName;
+
+
+    /**
+     * @var bool
+     */
+    protected $pagedMode;
+
+    /**
+     * @var EventHandler
+     */
+    protected $pageLoaded;
+
+    /**
+     * @var PageInfo
+     */
+    protected $pageInfo;
+
+
+    /**
      * @param ClientRuntimeContext $ctx
      * @param ResourcePath $resourcePath
-     * @param ODataQueryOptions $queryOptions
+     * @param string $itemTypeName
      */
-    public function __construct(ClientRuntimeContext $ctx, ResourcePath $resourcePath = null, ODataQueryOptions $queryOptions = null)
+    public function __construct(ClientRuntimeContext $ctx,ResourcePath $resourcePath = null,$itemTypeName=null)
     {
-        parent::__construct($ctx, $resourcePath, $queryOptions);
+        parent::__construct($ctx, $resourcePath);
         $this->data = array();
         $this->NextRequestUrl = null;
+        $this->itemTypeName = $itemTypeName;
+        $this->pagedMode = false;
+        $this->pageInfo = new PageInfo();
+        $this->pageLoaded = new EventHandler();
     }
 
 
@@ -75,6 +137,7 @@ class ClientObjectCollection extends ClientObject implements IteratorAggregate
         $this->data[] = $clientObject;
         if (is_null($clientObject->parentCollection))
             $clientObject->parentCollection = $this;
+        return $this;
     }
 
 
@@ -143,7 +206,9 @@ class ClientObjectCollection extends ClientObject implements IteratorAggregate
     }
 
     /**
+     * Returns total items count
      * @return int
+     * @throws Exception
      */
     public function getCount()
     {
@@ -157,12 +222,15 @@ class ClientObjectCollection extends ClientObject implements IteratorAggregate
 
     public function clearData()
     {
-        $this->data = array();
+        if(!$this->pagedMode){
+            $this->data = array();
+        }
+        $this->NextRequestUrl = null;
     }
 
     /**
      * Specifies an expression or function that must evaluate to true for a record to be returned in the collection.
-     * @param $value
+     * @param string $value
      * @return ClientObjectCollection $this
      */
     public function filter($value)
@@ -173,8 +241,24 @@ class ClientObjectCollection extends ClientObject implements IteratorAggregate
 
 
     /**
+     * Retrieves via server-driven paging mode
+     * @param int $pageSize
+     * @param callable $pageLoaded
+     */
+    public function paged($pageSize=null, $pageLoaded=null){
+        $this->pagedMode = true;
+        if(isset($pageLoaded))
+            $this->pageLoaded->addEvent($pageLoaded);
+        if(isset($pageSize)){
+            $this->top($pageSize);
+        }
+        return $this;
+    }
+
+
+    /**
      * Determines the maximum number of records to return.
-     * @param $value
+     * @param string $value
      * @return ClientObjectCollection $this
      */
     public function orderBy($value)
@@ -185,7 +269,7 @@ class ClientObjectCollection extends ClientObject implements IteratorAggregate
 
     /**
      * Determines the maximum number of records to return.
-     * @param $value
+     * @param int $value
      * @return ClientObjectCollection $this
      */
     public function top($value)
@@ -196,7 +280,7 @@ class ClientObjectCollection extends ClientObject implements IteratorAggregate
 
     /**
      * Sets the number of records to skip before it retrieves records in a collection.
-     * @param $value
+     * @param int $value
      * @return ClientObjectCollection $this
      */
     public function skip($value)
@@ -208,7 +292,7 @@ class ClientObjectCollection extends ClientObject implements IteratorAggregate
 
     /**
      * Sets the number of records to skip before it retrieves records in a collection.
-     * @param $value
+     * @param string $value
      * @return ClientObjectCollection $this
      */
     public function skiptoken($value)
@@ -220,12 +304,13 @@ class ClientObjectCollection extends ClientObject implements IteratorAggregate
 
     /**
      * Creates resource for a collection
+     * @param ResourcePath|null $resourcePath
      * @return ClientObject
      */
-    public function createType()
+    public function createType($resourcePath=null)
     {
-        $clientObjectType = $this->getItemTypeName();
-        $clientObject = new $clientObjectType($this->getContext());
+        $itemTypeName = $this->getItemTypeName();
+        $clientObject = new $itemTypeName($this->getContext(),$resourcePath);
         $clientObject->parentCollection = $this;
         return $clientObject;
     }
@@ -235,6 +320,8 @@ class ClientObjectCollection extends ClientObject implements IteratorAggregate
      */
     public function getItemTypeName()
     {
+        if(!is_null($this->itemTypeName))
+            return $this->itemTypeName;
         return str_replace("Collection", "", get_class($this));
     }
 
@@ -242,10 +329,10 @@ class ClientObjectCollection extends ClientObject implements IteratorAggregate
     /**
      * @return array
      */
-    function toJson()
+    function toJson($onlyChanges=false)
     {
-        return array_map(function (ClientObject $item) {
-            return $item->toJson();
+        return array_map(function (ClientObject $item) use($onlyChanges) {
+            return $item->toJson($onlyChanges);
         }, $this->getData());
     }
 
@@ -271,36 +358,134 @@ class ClientObjectCollection extends ClientObject implements IteratorAggregate
 
 
     /**
-     * @return Generator|Traversable
+     * @return Traversable
      * @throws Exception
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         /** @var ClientObject $item */
         foreach ($this->data as $index => $item) {
             yield $index => $item;
         }
 
-        if(is_null($this->queryOptions->Top) && !is_null($this->NextRequestUrl)){
-            foreach ($this->getNextItems() as $item){
-                $this->addChild($item);
-                yield $item;
+        if($this->pagedMode){
+            if($this->hasNext()){
+                $nextItems = $this->getNext()->executeQuery();
+                foreach ($nextItems as $item){
+                    yield $item;
+                }
             }
         }
     }
+
+    protected function hasNext(){
+        return !is_null($this->NextRequestUrl);
+    }
+
+    /**
+     * @return self
+     */
+    public function get()
+    {
+        $this->getContext()->getPendingRequest()->afterExecuteRequest(function (){
+            $this->pageInfo->setNextPage(count($this->data));
+            $this->pageLoaded->triggerEvent(array($this));
+        });
+        return parent::get();
+    }
+
+
+    /**
+     * Gets all the items in a collection, regardless of the size.
+     * @param int $pageSize
+     * @param callable $pageLoaded
+     * @return self
+     */
+    public function getAll($pageSize=null, $pageLoaded=null)
+    {
+        $this->paged($pageSize,$pageLoaded);
+        $this->getContext()->getPendingRequest()->afterExecuteRequest(function (){
+            if($this->hasNext()) {
+                $this->getNext();
+            }
+        }, false);
+        return $this->get();
+    }
+
+
 
     /**
      * @return ClientObjectCollection
      * @throws Exception
      */
-    private function getNextItems(){
-        $items = new ClientObjectCollection($this->context,$this->resourcePath);
-        $request = new RequestOptions($this->NextRequestUrl);
-        $response = $this->getContext()->executeQueryDirect($request);
-        $payload = json_decode($response->getContent(), true);
-        $this->getContext()->getPendingRequest()->mapJson($payload,$items,new JsonLightFormat());
-        $this->NextRequestUrl = null;
-        return $items;
+    private function getNext(){
+        $this->getContext()->getPendingRequest()->beforeExecuteRequest(function (RequestOptions $request){
+            $request->Url = $this->NextRequestUrl;
+        });
+        $this->get();
+        return $this;
     }
 
+    /**
+     * Whether or not an offset exists
+     *
+     * @param int An offset to check for
+     * @access public
+     * @return boolean
+     * @abstracting ArrayAccess
+     */
+    public function offsetExists($offset): bool
+    {
+        return isset($this->data[$offset]);
+    }
+
+    #[\ReturnTypeWillChange]
+    /**
+     * Returns the value at specified offset
+     *
+     * @param int The offset to retrieve
+     * @access public
+     * @return ClientObject
+     * @abstracting ArrayAccess
+     */
+    public function offsetGet($offset)
+    {
+        return $this->offsetExists($offset) ? $this->data[$offset] : null;
+    }
+
+
+    /**
+     * Assigns a value to the specified offset
+     *
+     * @param int The offset to assign the value to
+     * @param ClientObject  The value to set
+     * @access public
+     * @abstracting ArrayAccess
+     */
+    public function offsetSet($offset, $value): void
+    {
+        if (is_null($offset)) {
+            $this->data[] = $value;
+        } else {
+            $this->data[$offset] = $value;
+        }
+    }
+
+    /**
+     * Unsets an offset
+     *
+     * @param int The offset to unset
+     * @access public
+     * @abstracting ArrayAccess
+     */
+    public function offsetUnset($offset): void
+    {
+        if ($this->offsetExists($offset)) {
+            unset($this->data[$offset]);
+        }
+    }
+
+    public function getPageInfo(){
+        return $this->pageInfo;
+    }
 }

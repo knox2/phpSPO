@@ -4,15 +4,14 @@
 namespace Office365\SharePoint;
 
 
-use Office365\Runtime\ClientObjectCollection;
 use Office365\Runtime\Actions\InvokeMethodQuery;
-use Office365\Runtime\ResourcePathServiceOperation;
+use Office365\Runtime\Paths\ServiceOperationPath;
 
 
 /**
  * Represents the collection of RoleDefinition objects that define the role definitions that are available for use within the Web site.
  */
-class RoleDefinitionCollection extends ClientObjectCollection
+class RoleDefinitionCollection extends BaseEntityCollection
 {
 
     /**
@@ -22,7 +21,7 @@ class RoleDefinitionCollection extends ClientObjectCollection
      */
     public function getById($Id)
     {
-        $path = new ResourcePathServiceOperation("getById", array(
+        $path = new ServiceOperationPath("getById", array(
             $Id
         ),$this->getResourcePath());
         $roleDef = new RoleDefinition($this->getContext(), $path);
@@ -37,7 +36,7 @@ class RoleDefinitionCollection extends ClientObjectCollection
      */
     public function getByName($name)
     {
-        $path = new ResourcePathServiceOperation("getByName",array(
+        $path = new ServiceOperationPath("getByName",array(
             $name
         ),$this->getResourcePath());
         $roleDef = new RoleDefinition($this->getContext(),$path);

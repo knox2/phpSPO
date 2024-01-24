@@ -2,15 +2,15 @@
 
 namespace Office365;
 
-use Office365\Graph\DriveItem;
-use Office365\Graph\IdentitySet;
+use Office365\Directory\Identities\IdentitySet;
+use Office365\OneDrive\DriveItems\DriveItem;
 
 
 class OneDriveTest extends GraphTestCase
 {
     private static $localFile;
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         self::$localFile = __DIR__ . "/../../examples/data/SharePoint User Guide.docx";
         parent::setUpBeforeClass();

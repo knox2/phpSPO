@@ -2,9 +2,7 @@
 
 namespace Office365;
 
-use Exception;
-use Office365\Graph\GraphServiceClient;
-use Office365\Runtime\Auth\AuthenticationContext;
+use Office365\Runtime\Auth\AADTokenProvider;
 use Office365\Runtime\Auth\UserCredentials;
 use PHPUnit\Framework\TestCase;
 
@@ -15,34 +13,38 @@ abstract class GraphTestCase extends TestCase
      * @var GraphServiceClient
      */
     protected static $graphClient;
+    /**
+     * @var string
+     */
+    protected static $testAccountName;
+
+    protected  static $settings;
 
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
-        $settings = include(__DIR__ . '/../Settings.php');
-        self::$graphClient = new GraphServiceClient($settings['TenantName'], function (AuthenticationContext $authCtx)
-        use ($settings) {
-            self::acquireToken($authCtx, $settings['ClientId'], $settings['UserName'], $settings['Password']);
+        self::$settings = include(__DIR__ . '/Settings.php');
+        self::$testAccountName = self::$settings['TestAccountName'];
+        self::$graphClient = new GraphServiceClient(function () {
+            return self::acquireToken();
         });
     }
 
-    public static function tearDownAfterClass()
+    public static function tearDownAfterClass(): void
     {
         self::$graphClient = null;
     }
 
 
-    /**
-     * @param AuthenticationContext $authCtx
-     * @param string $clientId
-     * @param string $userName
-     * @param string $password
-     * @throws Exception
-     */
-    public static function acquireToken(AuthenticationContext $authCtx, $clientId, $userName, $password)
+    public static function acquireToken()
     {
         $resource = "https://graph.microsoft.com";
-        $authCtx->acquireTokenForPassword($resource,$clientId,new UserCredentials($userName, $password));
+        $provider = new AADTokenProvider(self::$settings['TenantName']);
+        return $provider->acquireTokenForPassword($resource, self::$settings['ClientId'],
+            new UserCredentials(self::$settings['UserName'], self::$settings['Password']));
     }
 
+    public static function createUniqueName($prefix){
+        return  $prefix . "_" . rand(1, 100000);
+    }
 }

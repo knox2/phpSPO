@@ -3,12 +3,24 @@
 
 namespace Office365\SharePoint;
 
-use Office365\Runtime\ClientObjectCollection;
 use Office365\Runtime\Actions\InvokePostMethodQuery;
-use Office365\Runtime\ResourcePathServiceOperation;
+use Office365\Runtime\ClientObject;
+use Office365\Runtime\ClientRuntimeContext;
+use Office365\Runtime\Paths\ServiceOperationPath;
+use Office365\Runtime\ResourcePath;
 
-class ContentTypeCollection extends ClientObjectCollection
+class ContentTypeCollection extends BaseEntityCollection
 {
+
+    /**
+     * @param ClientRuntimeContext $ctx
+     * @param ResourcePath|null $resourcePath
+     * @param ClientObject|null $parent
+     */
+    public function __construct(ClientRuntimeContext $ctx, ResourcePath $resourcePath = null, ClientObject $parent = null)
+    {
+        parent::__construct($ctx, $resourcePath, ContentType::class, $parent);
+    }
 
     /**
      * @param string $id
@@ -18,7 +30,7 @@ class ContentTypeCollection extends ClientObjectCollection
     {
         $contentType = new ContentType(
             $this->getContext(),
-            new ResourcePathServiceOperation("GetById",array($id),$this->getResourcePath())
+            new ServiceOperationPath("GetById",array($id),$this->getResourcePath())
         );
         $this->addChild($contentType);
         return $contentType;

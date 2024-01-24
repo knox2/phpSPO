@@ -6,10 +6,12 @@ use Office365\Generator\Builders\TemplateContext;
 use Office365\Generator\Builders\TypeBuilder;
 use Office365\Generator\Documentation\MSGraphDocsService;
 use Office365\Generator\Documentation\SharePointSpecsService;
+use Office365\Runtime\Auth\UserCredentials;
+use Office365\Runtime\Http\RequestException;
 use Office365\Runtime\OData\MetadataResolver;
 use Office365\Runtime\OData\ODataModel;
-use Office365\Runtime\OData\ODataV3Reader;
-use Office365\Runtime\OData\ODataV4Reader;
+use Office365\Runtime\OData\V3\ODataV3Reader;
+use Office365\Runtime\OData\V4\ODataV4Reader;
 use Office365\SharePoint\ClientContext;
 
 
@@ -17,10 +19,11 @@ use Office365\SharePoint\ClientContext;
  * @param $typeSchema array
  * @param $options array
  */
-function generateTypeFile($typeSchema, $options)
+function generateTypeFile(array $typeSchema, array $options)
 {
     if(!isset($typeSchema['baseType'])){
         #print ("[Warn] ${$typeSchema['alias']} type not determined.\n");
+        return;
     }
     else{
         $templatePath = join(DIRECTORY_SEPARATOR,[$options['templatePath'],$typeSchema['baseType'] . '.php']) ;
@@ -79,7 +82,11 @@ function generateSharePointModel()
 {
     syncSharePointMetadataFile('./Settings.SharePoint.json');
     $options = loadSettingsFromFile('./Settings.SharePoint.json');
-    $options['docs'] = new SharePointSpecsService($options['docsRoot']);
+    try {
+        $options['docs'] = new SharePointSpecsService($options['docsRoot']);
+    } catch (RequestException $e) {
+        //ignore
+    }
     $reader = new ODataV3Reader();
     $model = $reader->generateModel($options);
     generateFiles($model);
@@ -103,18 +110,27 @@ function generateMicrosoftGraphModel()
 }
 
 
+function saveMetadataFile($xml, $metadataPath){
+    $dom = new DOMDocument();
+    $dom->preserveWhiteSpace = false;
+    $dom->formatOutput = true;
+    $dom->loadXML($xml);
+    file_put_contents($metadataPath,$dom->saveXML());
+}
+
+
 function syncSharePointMetadataFile($fileName){
-    $Settings = include('../Settings.php');
-    $ctx = ClientContext::connectWithUserCredentials($Settings['Url'], $Settings['UserName'], $Settings['Password']);
-    $ctx->requestFormDigest();
-    $ctx->executeQuery();
+    $Settings = include('../tests/Settings.php');
+    $credentials = new UserCredentials($Settings['UserName'], $Settings['Password']);
+    $ctx = (new ClientContext($Settings['Url']))->withCredentials($credentials);
+    $ctx->requestFormDigest()->executeQuery();
     $latestVersion = $ctx->getContextWebInformation()->LibraryVersion;
 
     $options = json_decode(file_get_contents($fileName), true);
     if(!file_exists($options['metadataPath']) || $options['version'] != $latestVersion){
         echo "Loading metadata for version " . $options['version'] . " ..."  . PHP_EOL;
         $contents = MetadataResolver::getMetadata($ctx);
-        file_put_contents($options['metadataPath'],$contents);
+        saveMetadataFile($contents, $options['metadataPath']);
         $options['version'] = $latestVersion;
         $options['timestamp'] = date('c');
         file_put_contents($fileName,json_encode($options,JSON_PRETTY_PRINT));

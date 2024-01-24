@@ -2,16 +2,23 @@
 
 namespace Office365\SharePoint;
 use Office365\Runtime\Actions\InvokePostMethodQuery;
-use Office365\Runtime\ClientObjectCollection;
-use Office365\Runtime\ResourcePathServiceOperation;
+use Office365\Runtime\ClientObject;
+use Office365\Runtime\ClientRuntimeContext;
+use Office365\Runtime\Paths\ServiceOperationPath;
+use Office365\Runtime\ResourcePath;
 
 
 /**
  * File collections
  *
  */
-class FileCollection extends ClientObjectCollection
+class FileCollection extends BaseEntityCollection
 {
+
+    public function __construct(ClientRuntimeContext $ctx, ResourcePath $resourcePath = null, ClientObject $parent = null)
+    {
+        parent::__construct($ctx, $resourcePath, File::class, $parent);
+    }
 
     /**
      * Creates a File resource
@@ -61,7 +68,7 @@ class FileCollection extends ClientObjectCollection
      * @return File
      */
     public function getByUrl($serverRelativeUrl){
-        $path = new ResourcePathServiceOperation("getByUrl",array(
+        $path = new ServiceOperationPath("getByUrl",array(
             rawurlencode($serverRelativeUrl)
         ),$this->getResourcePath());
         return new File($this->getContext(),$path);

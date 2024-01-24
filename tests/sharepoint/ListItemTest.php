@@ -17,14 +17,14 @@ class ListItemTest extends SharePointTestCase
      */
     private static $targetList;
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
         $listTitle = self::createUniqueName("Orders");
         self::$targetList = self::ensureList(self::$context->getWeb(), $listTitle, ListTemplateType::Tasks);
     }
 
-    public static function tearDownAfterClass()
+    public static function tearDownAfterClass(): void
     {
         self::$targetList->deleteObject()->executeQuery();
         parent::tearDownAfterClass();
@@ -36,6 +36,23 @@ class ListItemTest extends SharePointTestCase
         $itemsCount = self::$targetList->getItemCount();
         $items = self::$targetList->getItems(CamlQuery::createAllItemsQuery())->executeQuery();
         $this->assertEquals($itemsCount, $items->getCount());
+    }
+
+    public function testIterator()
+    {
+        // Test that list items can be iterated over without crashing
+        // First, test a simple get with no paging
+        foreach (self::$targetList->getItems()->get()->executeQuery() as $item) {
+            $this->assertNotEmpty($item);
+        }
+        // Now test with explicit paging
+        foreach (self::$targetList->getItems()->get()->paged(1)->executeQuery() as $item) {
+            $this->assertNotEmpty($item);
+        }
+        // Now test with implicit paging via getAll()
+        foreach (self::$targetList->getItems()->getAll()->executeQuery() as $item) {
+            $this->assertNotEmpty($item);
+        }
     }
 
 
@@ -68,9 +85,7 @@ class ListItemTest extends SharePointTestCase
         self::$context->load($targetFolder);
         self::$context->executeQuery();
 
-        $items = self::$targetList->getItems()->expand("Folder");
-        self::$context->load($items);
-        self::$context->executeQuery();
+        $items = self::$targetList->getItems()->expand("Folder")->get()->executeQuery();
         $result = $items->findItems(function (ListItem $item) use ($targetFolder) {
             return $item->getFolder()->getName() === $targetFolder->getName();
 
@@ -173,7 +188,6 @@ class ListItemTest extends SharePointTestCase
     public function testQueryOptionsSkipToken()
     {
         $minItemsCount = 10;
-        $maxItemId = null;
         $itemsCount = self::$targetList->getProperty("ItemCount");
         if ($itemsCount < $minItemsCount) {
             $itemProperties = array(

@@ -1,16 +1,24 @@
 <?php
 
 namespace Office365\SharePoint;
-use Office365\Runtime\ClientObjectCollection;
 use Office365\Runtime\Actions\InvokePostMethodQuery;
-use Office365\Runtime\ResourcePathServiceOperation;
+use Office365\Runtime\ClientObject;
+use Office365\Runtime\ClientRuntimeContext;
+use Office365\Runtime\Paths\ServiceOperationPath;
+use Office365\Runtime\ResourcePath;
 
 
 /**
  * List collection
  */
-class ListCollection extends ClientObjectCollection
+class ListCollection extends BaseEntityCollection
 {
+
+    public function __construct(ClientRuntimeContext $ctx, ResourcePath $resourcePath = null, ClientObject $parent = null)
+    {
+        parent::__construct($ctx, $resourcePath, SPList::class , $parent);
+    }
+
     /**
      * Get List by title
      * @param $title
@@ -20,7 +28,7 @@ class ListCollection extends ClientObjectCollection
     {
         return new SPList(
             $this->getContext(),
-            new ResourcePathServiceOperation("getByTitle",array(rawurlencode($title)),$this->getResourcePath())
+            new ServiceOperationPath("getByTitle",array(rawurlencode($title)),$this->getResourcePath())
         );
     }
 
@@ -33,7 +41,7 @@ class ListCollection extends ClientObjectCollection
     {
         return new SPList(
             $this->getContext(),
-            new ResourcePathServiceOperation("getById",array($id),$this->getResourcePath())
+            new ServiceOperationPath("getById",array($id),$this->getResourcePath())
         );
     }
 

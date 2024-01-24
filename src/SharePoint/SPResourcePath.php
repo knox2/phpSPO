@@ -10,12 +10,24 @@ class SPResourcePath extends ClientValue
 
     /**
      * @param string $decodedUrl
-     * @param string|null $typeName
      */
-    public function __construct($decodedUrl,$typeName = null)
+    public function __construct($decodedUrl=null)
     {
         $this->DecodedUrl = $decodedUrl;
-        parent::__construct($typeName);
+        parent::__construct();
+    }
+
+    public function __toString()
+    {
+        return $this->DecodedUrl;
+    }
+
+    /**
+     * @return array
+     */
+    public function toJson()
+    {
+        return array("DecodedUrl" => rawurlencode($this->DecodedUrl));
     }
 
     /**

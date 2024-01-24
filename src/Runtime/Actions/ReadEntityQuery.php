@@ -18,8 +18,8 @@ class ReadEntityQuery extends ClientAction
         if (is_null($includeProperties))
             $includeProperties = array();
         $expandProperties = array_filter($includeProperties, function ($name) use ($entityToRead) {
-            $propType = $entityToRead->getPropertyType($name);
-            return $propType instanceof ClientObject;
+            $propType = $entityToRead->getProperty($name, null, true);
+            return $propType instanceof ClientObject || $name == "Properties";
         });
         if (!empty($includeProperties))
             $bindingType->getQueryOptions()->Select = implode(",", $includeProperties);

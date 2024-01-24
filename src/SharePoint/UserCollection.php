@@ -7,11 +7,22 @@ namespace Office365\SharePoint;
 
 
 use Office365\Runtime\Actions\InvokePostMethodQuery;
-use Office365\Runtime\ClientObjectCollection;
-use Office365\Runtime\ResourcePathServiceOperation;
+use Office365\Runtime\ClientObject;
+use Office365\Runtime\ClientRuntimeContext;
+use Office365\Runtime\Paths\ServiceOperationPath;
+use Office365\Runtime\ResourcePath;
 
-class UserCollection extends ClientObjectCollection
+class UserCollection extends BaseEntityCollection
 {
+    /**
+     * @param ClientRuntimeContext $ctx
+     * @param ResourcePath|null $resourcePath
+     * @param ClientObject|null $parent
+     */
+    public function __construct(ClientRuntimeContext $ctx, ResourcePath $resourcePath = null, ClientObject $parent = null)
+    {
+        parent::__construct($ctx, $resourcePath, User::class, $parent);
+    }
 
     /**
      * Add a user
@@ -35,7 +46,7 @@ class UserCollection extends ClientObjectCollection
      */
     public function getById($id)
     {
-        $path = new ResourcePathServiceOperation("getById",array($id),$this->getResourcePath());
+        $path = new ServiceOperationPath("getById",array($id),$this->getResourcePath());
         return new User($this->getContext(),$path);
     }
 
@@ -46,7 +57,7 @@ class UserCollection extends ClientObjectCollection
      */
     public function getByEmail($emailAddress)
     {
-        $path = new ResourcePathServiceOperation("getByEmail",array($emailAddress),$this->getResourcePath());
+        $path = new ServiceOperationPath("getByEmail",array($emailAddress),$this->getResourcePath());
         return new User($this->getContext(),$path);
     }
 
@@ -56,8 +67,8 @@ class UserCollection extends ClientObjectCollection
      */
     public function getByLoginName($loginName)
     {
-        $path = new ResourcePathServiceOperation("getByLoginName",array($loginName),$this->getResourcePath());
-        return new User($this->getContext(),$path);
+        return new User($this->getContext(),
+            new ServiceOperationPath("getByLoginName",array($loginName),$this->getResourcePath()));
     }
 
 

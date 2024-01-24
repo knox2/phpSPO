@@ -12,22 +12,29 @@ class Requests
 	);
 
     /**
+     * @param array $defaultOptions An array specifying which options to set and their values. The keys should be valid
+     * curl_setopt() constants or their integer equivalents.
+     */
+    public static function setDefaultOptions(array $defaultOptions): void
+    {
+        self::$defaultOptions = array_replace(self::$defaultOptions, $defaultOptions);
+    }
+
+    /**
      * @param RequestOptions $options
-     * @param array $headers
      * @return Response
      * @throws RequestException
      */
-	public static function execute(RequestOptions $options, &$headers = array())
+	public static function execute(RequestOptions $options)
 	{
-		$ch = Requests::init($options);
-        $response = curl_exec($ch);
-        $headers["HttpCode"] = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $headers["ContentType"] = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-        if ($response === false) {
-            throw new RequestException(curl_error($ch), curl_errno($ch));
-        }
-        curl_close($ch);
-		return new Response($response,$headers);
+            $ch = Requests::init($options);
+            $response = curl_exec($ch);
+            $curlInfo = curl_getinfo($ch);
+            if ($response === false) {
+                throw new RequestException(curl_error($ch), curl_errno($ch));
+            }
+            curl_close($ch);
+            return new Response($response, $curlInfo, $options);
 	}
 
 
@@ -111,6 +118,8 @@ class Requests
         curl_setopt($ch, CURLOPT_HEADER, $options->IncludeHeaders);
         //include body in response
         curl_setopt($ch, CURLOPT_NOBODY, !$options->IncludeBody);
+        //set re-use policy
+        curl_setopt($ch, CURLOPT_FORBID_REUSE, $options->ForbidReuse);
         //Set method
         if($options->Method === HttpMethod::Post) {
            curl_setopt($ch, CURLOPT_POST, 1);
@@ -132,7 +141,7 @@ class Requests
             $opt = $options->Method === HttpMethod::Get ? CURLOPT_FILE : CURLOPT_INFILE;
             curl_setopt($ch, $opt, $options->StreamHandle);
         }
-        $options->ensureHeader("Content-Length",strlen($options->Data));
+        $options->ensureHeader("Content-Length",strlen((string) $options->Data));
         //custom HTTP headers
         if($options->Headers)
             curl_setopt($ch, CURLOPT_HTTPHEADER, $options->getRawHeaders());
@@ -151,6 +160,8 @@ class Requests
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $options->ConnectTimeout);
         if($options->FollowLocation)
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        if(!is_null($options->IPResolve))
+            curl_setopt($ch, CURLOPT_IPRESOLVE, $options->IPResolve);
         return $ch;
     }
 

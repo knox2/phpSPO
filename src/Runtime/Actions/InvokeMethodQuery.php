@@ -5,9 +5,8 @@ namespace Office365\Runtime\Actions;
 
 
 use Office365\Runtime\ClientObject;
-use Office365\Runtime\OData\ODataRequest;
+use Office365\Runtime\Paths\ServiceOperationPath;
 use Office365\Runtime\ResourcePath;
-use Office365\Runtime\ResourcePathServiceOperation;
 
 
 class InvokeMethodQuery extends ClientAction
@@ -29,31 +28,28 @@ class InvokeMethodQuery extends ClientAction
     /**
      * @return ResourcePath
      */
-    public function getMethodPath(){
-        return new ResourcePathServiceOperation($this->MethodName,$this->MethodParameters);
+    public function getPath(){
+        if ($this->IsStatic) {
+            $entityTypeName = (string)$this->BindingType->getServerTypeInfo();
+            $staticName = implode(".",[$entityTypeName, $this->MethodName]);
+            return new ServiceOperationPath($staticName,$this->MethodParameters);
+        }
+        return new ServiceOperationPath($this->MethodName, $this->MethodParameters);
     }
 
     /**
      * @return string
      */
-    public function getActionUrl()
+    public function getUrl()
     {
-        if (!is_null($this->MethodName)) {
-            if ($this->IsStatic) {
-                $request = $this->getContext()->getPendingRequest();
-                $entityTypeName = $this->BindingType->getServerTypeName();
-                if($request instanceof ODataRequest){
-                    $entityTypeName = $request->normalizeTypeName($entityTypeName);
-                }
-
-                $methodUrl = implode(".",
-                    array($entityTypeName, $this->getMethodPath()->toUrl()));
-                return implode("", array($this->getContext()->getServiceRootUrl(), $methodUrl));
-            } else {
-                return implode("/", array($this->BindingType->getResourceUrl(), $this->getMethodPath()->toUrl()));
-            }
+        if(is_null($this->MethodName)){
+            return parent::getUrl();
         }
-        return parent::getActionUrl();
+
+        if ($this->IsStatic) {
+            return implode("", [$this->getContext()->getServiceRootUrl(), $this->getPath()->toUrl()]);
+        }
+        return implode("", [$this->BindingType->getResourceUrl(), $this->getPath()->toUrl()]);
     }
 
 

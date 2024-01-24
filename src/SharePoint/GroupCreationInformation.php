@@ -3,6 +3,7 @@
 
 namespace Office365\SharePoint;
 use Office365\Runtime\ClientValue;
+use Office365\Runtime\ServerTypeInfo;
 
 /**
  * An object used to facilitate creation of a cross-site group.
@@ -24,7 +25,15 @@ class GroupCreationInformation extends ClientValue
     {
         $this->Title = $title;
         $this->Description = "";
-        parent::__construct("Group");
+        parent::__construct();
     }
-    
+
+    /**
+     * @return ServerTypeInfo
+     */
+    public function getServerTypeInfo()
+    {
+        return new ServerTypeInfo("SP", "Group");
+    }
+
 }

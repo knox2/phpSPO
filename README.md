@@ -1,14 +1,15 @@
-﻿### About
-Office 365 Library for PHP. 
-A REST/OData based client library for Office 365.
+﻿## About
+Microsoft 365 Library for PHP.
+A REST/OData based client library for Microsoft 365.
 
 
-### Usage 
+### Usage
 
 1.   [Installation](#Installation)
-1.   [Working with SharePoint API](#Working-with-SharePoint-API) 
-2.   [Working with Outlook API](#Working-with-Outlook-API) 
-3.   [Working with OneDrive API](#Working-with-OneDrive-API)
+2.   [Working with SharePoint API](#Working-with-SharePoint-API)
+3.   [Working with Teams API](#Working-with-Teams-API)
+4.   [Working with Outlook API](#Working-with-Outlook-API)
+5.   [Working with OneDrive API](#Working-with-OneDrive-API)
 
 
 ### Status
@@ -51,9 +52,9 @@ Finally, be sure to include the autoloader:
 require_once '/path/to/your-project/vendor/autoload.php';
 ```
 
-#### Requirements 
+#### Requirements
 
-PHP version: [PHP 5.5 or later](https://secure.php.net/)
+PHP version: [PHP 7.1 or later](https://www.php.net/)
 
 
 #### Working with SharePoint API
@@ -61,34 +62,73 @@ PHP version: [PHP 5.5 or later](https://secure.php.net/)
 The list of supported SharePoint versions:
 
 - SharePoint Online and OneDrive for Business
-- SharePoint On-Premises (2013-2019) 
+- SharePoint On-Premises (2013-2019)
 
 #### Authentication
 
 The following auth flows supported:
 
-- app principals (client credentials) auth (refer [Granting access using SharePoint App-Only](https://docs.microsoft.com/en-us/sharepoint/dev/solution-guidance/security-apponly-azureacs) for a details): 
-  ```
-  $credentials = new ClientCredential($clientId, $clientSecret);
-  $ctx = (new ClientContext($url))->withCredentials($credentials);
-  ```
+#### 1. app principal with client credentials:
+
+```php
+
+  use Office365\Runtime\Auth\ClientCredential;
+  use Office365\SharePoint\ClientContext;
+
+  $credentials = new ClientCredential("{clientId}", "{clientSecret}");
+  $ctx = (new ClientContext("{siteUrl}"))->withCredentials($credentials);
+```
+
+Documentation:
+
+- [wiki](https://github.com/vgrem/phpSPO/wiki/How-to-connect-to-SharePoint-Online-and-and-SharePoint-2013-2016-2019-on-premises--with-app-principal)
+- [Granting access using SharePoint App-Only](https://docs.microsoft.com/en-us/sharepoint/dev/solution-guidance/security-apponly-azureacs)
+
+#### 2. app principal with client certificate:
+
+```php
+
+  use Office365\Runtime\Auth\ClientCredential;
+  use Office365\SharePoint\ClientContext;
 
 
-- user credentials auth: 
-  ```
-  $credentials = new UserCredentials($userName, $password);
-  $ctx = (new ClientContext($url))->withCredentials($credentials);
-  ```
-  
-  
-- NTLM auth (for SharePoint On-Premises):
-  ```
-   $authCtx = new NetworkCredentialContext($username, $password);
-   $authCtx->AuthType = CURLAUTH_NTLM;
-   $ctx = new ClientContext($url,$authCtx);
-  ```
+$tenant = "{tenant}.onmicrosoft.com"; //tenant id or name
+$privateKetPath = "-- path to private.key file--"
+$privateKey = file_get_contents($privateKetPath);
 
-#### Examples  
+$ctx = (new ClientContext("{siteUrl}"))->withClientCertificate(
+    $tenant, "{clientId}", $privateKey, "{thumbprint}");
+```
+
+Documentation:
+
+- [wiki](https://github.com/vgrem/phpSPO/wiki/Granting-access-via-Azure-AD-App%E2%80%90Only-with-Certificate) 
+- [Granting access using SharePoint App-Only](https://docs.microsoft.com/en-us/sharepoint/dev/solution-guidance/security-apponly-azureacs) 
+
+
+#### 3. user credentials auth:
+
+```php
+
+  use Office365\Runtime\Auth\UserCredentials;
+  use Office365\SharePoint\ClientContext;
+
+  $credentials = new UserCredentials("{userName}", "{password}");
+  $ctx = (new ClientContext("{siteUrl}"))->withCredentials($credentials);
+```
+
+
+#### 4. NTLM auth (for SharePoint On-Premises):
+```php
+   use Office365\Runtime\Auth\UserCredentials;
+   use Office365\SharePoint\ClientContext;
+
+   $credentials = new UserCredentials("{userName}", "{password}");
+   $ctx = (new ClientContext("{siteUrl}"))->withNtlm($credentials);
+
+```
+
+#### Examples
 
 The following examples demonstrates how to perform basic CRUD operations against **SharePoint** list item resources:
 
@@ -100,36 +140,36 @@ use Office365\Runtime\Auth\ClientCredential;
 use Office365\SharePoint\ListItem;
 
 $credentials = new ClientCredential("{client-id}", "{client-secret}");
-$client = (new ClientContext("https://{your-tenant-prefix}.sharepoint.com"))->withCredentials($credentials);     
+$client = (new ClientContext("https://{your-tenant-prefix}.sharepoint.com"))->withCredentials($credentials);
 
 $web = $client->getWeb();
 $list = $web->getLists()->getByTitle("{list-title}"); //init List resource
-$items = $list->getItems();  //prepare a query to retrieve from the 
-$client->load($items);  //save a query to retrieve list items from the server 
-$client->executeQuery(); //submit query to SharePoint Online REST service
+$items = $list->getItems();  //prepare a query to retrieve from the
+$client->load($items);  //save a query to retrieve list items from the server
+$client->executeQuery(); //submit query to SharePoint server
 /** @var ListItem $item */
 foreach($items as $item) {
     print "Task: {$item->getProperty('Title')}\r\n";
 }
 ```
 
-
-or via Fluent API syntax:
+or via fluent API syntax:
 
 ```php
+
 use Office365\SharePoint\ClientContext;
 use Office365\Runtime\Auth\ClientCredential;
 use Office365\SharePoint\ListItem;
 
 $credentials = new ClientCredential("{client-id}", "{client-secret}");
-$client = (new ClientContext("https://{your-tenant-prefix}.sharepoint.com"))->withCredentials($credentials);     
+$client = (new ClientContext("https://{your-tenant-prefix}.sharepoint.com"))->withCredentials($credentials);
 
 $items = $client->getWeb()
                 ->getLists()
-                ->getByTitle("{list-title}") 
+                ->getByTitle("{list-title}")
                 ->getItems()
                 ->get()
-                ->executeQuery();      
+                ->executeQuery();
 /** @var ListItem $item */
 foreach($items as $item) {
     print "Task: {$item->getProperty('Title')}\r\n";
@@ -182,12 +222,40 @@ $client->executeQuery();
 ```
 
 
+### Working with Teams API
+
+#### Example: create a Team
+The following is an example of a minimal request to create a Team (via delegated permissions)
+
+```php
+
+use Office365\GraphServiceClient;
+use Office365\Runtime\Auth\AADTokenProvider;
+use Office365\Runtime\Auth\UserCredentials;
+
+function acquireToken()
+{
+    $tenant = "{tenant}.onmicrosoft.com";
+    $resource = "https://graph.microsoft.com";
+
+    $provider = new AADTokenProvider($tenant);
+    return $provider->acquireTokenForPassword($resource, "{clientId}",
+        new UserCredentials("{UserName}", "{Password}"));
+}
+
+$client = new GraphServiceClient("acquireToken");
+$teamName = "My Sample Team";
+$newTeam = $client->getTeams()->add($teamName)->executeQuery();
+
+```
+
+
 
 ### Working with Outlook API
 
 Supported list of APIs:
 
--   [Outlook REST API](https://msdn.microsoft.com/en-us/office/office365/api/use-outlook-rest-api#DefineOutlookRESTAPI) 
+-   [Outlook REST API](https://msdn.microsoft.com/en-us/office/office365/api/use-outlook-rest-api#DefineOutlookRESTAPI)
     -   [Outlook Contacts REST API](https://msdn.microsoft.com/en-us/office/office365/api/contacts-rest-operations)
     -   [Outlook Calendar REST API](https://msdn.microsoft.com/en-us/office/office365/api/calendar-rest-operations)
     -   [Outlook Mail REST API](https://msdn.microsoft.com/en-us/office/office365/api/mail-rest-operations)
@@ -195,28 +263,31 @@ Supported list of APIs:
 The following example demonstrates how to send a message via Outlook Mail API:
 
 ```php
- use Office365\Runtime\Auth\AuthenticationContext;
- use Office365\OutlookServices\OutlookClient;
- use Office365\OutlookServices\ItemBody;
- use Office365\OutlookServices\BodyType;
- use Office365\OutlookServices\EmailAddress;
- use Office365\OutlookServices\Recipient;
+ use Office365\GraphServiceClient;
+ use Office365\Outlook\Message;
+ use Office365\Outlook\ItemBody;
+ use Office365\Outlook\BodyType;
+ use Office365\Outlook\EmailAddress;
+ use Office365\Runtime\Auth\AADTokenProvider;
+ use Office365\Runtime\Auth\UserCredentials;
 
- $tenantNameOrId = "{tenant}.onmicrosoft.com";
- $client = new OutlookClient($tenantNameOrId,function (AuthenticationContext $authCtx) {        
-        $authCtx->setAccessToken("--access token goes here--");
- });
+function acquireToken()
+{
+    $tenant = "{tenant}.onmicrosoft.com";
+    $resource = "https://graph.microsoft.com";
 
- $message = $client->getMe()->getMessages()->createMessage();
- $message->Subject = "Meet for lunch?";
- $message->Body = new ItemBody(BodyType::Text,"The new cafeteria is open.");
- $message->ToRecipients = array(
-     new Recipient(new EmailAddress(null,"{username}@{tenant_prefix}.onmicrosoft.com"))
- );
- $client->getMe()->sendEmail($message,true);
- $client->executeQuery();
+    $provider = new AADTokenProvider($tenant);
+    return $provider->acquireTokenForPassword($resource, "{clientId}",
+        new UserCredentials("{UserName}", "{Password}"));
+}
 
-
+$client = new GraphServiceClient("acquireToken");
+/** @var Message $message */
+$message = $client->getMe()->getMessages()->createType();
+$message->setSubject("Meet for lunch?");
+$message->setBody(new ItemBody(BodyType::Text,"The new cafeteria is open."));
+$message->setToRecipients([new EmailAddress(null,"fannyd@contoso.onmicrosoft.com")]);
+$client->getMe()->sendEmail($message,true)->executeQuery();
 ```
 
 ### Working with OneDrive API
@@ -224,19 +295,25 @@ The following example demonstrates how to send a message via Outlook Mail API:
 The following example demonstrates how retrieve My drive Url via OneDrive API:
 
 ```php
-use Office365\Runtime\Auth\AuthenticationContext;
-use Office365\Graph\GraphServiceClient;
+use Office365\GraphServiceClient;
+use Office365\Runtime\Auth\AADTokenProvider;
+use Office365\Runtime\Auth\UserCredentials;
 
-$tenantNameOrId = "{tenant}.onmicrosoft.com";
-$client = new GraphServiceClient($tenantNameOrId,function (AuthenticationContext $authCtx) {
-      $authCtx->setAccessToken("{access-token}");
-});
 
+function acquireToken()
+{
+    $tenant = "{tenant}.onmicrosoft.com";
+    $resource = "https://graph.microsoft.com";
+
+    $provider = new AADTokenProvider($tenant);
+    return $provider->acquireTokenForPassword($resource, "{clientId}",
+        new UserCredentials("{UserName}", "{Password}"));
+}
+
+$client = new GraphServiceClient("acquireToken");
 $drive = $client->getMe()->getDrive();
 $client->load($drive);
 $client->executeQuery();
-print $drive->getProperty("webUrl");
+print $drive->getWebUrl();
 
 ```
-
-

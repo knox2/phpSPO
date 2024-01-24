@@ -6,26 +6,30 @@
 namespace Office365\SharePoint;
 
 
-use Office365\Runtime\ClientObjectCollection;
 use Office365\Runtime\Actions\InvokePostMethodQuery;
+use Office365\Runtime\ClientObject;
+use Office365\Runtime\ClientRuntimeContext;
+use Office365\Runtime\Paths\ServiceOperationPath;
 use Office365\Runtime\ResourcePath;
-use Office365\Runtime\ResourcePathServiceOperation;
 
 /**
  * Represents a collection of RoleAssignment objects that defines all the role assignments for each securable object.
  */
-class RoleAssignmentCollection extends ClientObjectCollection
+class RoleAssignmentCollection extends BaseEntityCollection
 {
+
+    public function __construct(ClientRuntimeContext $ctx, ResourcePath $resourcePath = null, ClientObject $parent = null)
+    {
+        parent::__construct($ctx, $resourcePath, RoleAssignment::class, $parent);
+    }
+
     /**
      * @return GroupCollection
      */
     public function getGroups()
     {
-        if(!$this->isPropertyAvailable("Groups")){
-            $this->setProperty("Groups", new GroupCollection($this->getContext(),
-                new ResourcePath("Groups",$this->getResourcePath())));
-        }
-        return $this->getProperty("Groups");
+        return $this->getProperty("Groups",
+            new GroupCollection($this->getContext(),new ResourcePath("Groups",$this->getResourcePath())));
     }
 
 
@@ -41,6 +45,7 @@ class RoleAssignmentCollection extends ClientObjectCollection
             "roledefid" => $roleDefId
         ));
         $this->getContext()->addQuery($qry);
+        return $this;
     }
 
     /**
@@ -50,7 +55,7 @@ class RoleAssignmentCollection extends ClientObjectCollection
      */
     public function getByPrincipalId($principalId)
     {
-        $path = new ResourcePathServiceOperation("getByPrincipalId",array(
+        $path = new ServiceOperationPath("getByPrincipalId",array(
             $principalId
         ),$this->getResourcePath());
         $roleAssignment = new RoleAssignment($this->getContext(),$path);
@@ -70,5 +75,6 @@ class RoleAssignmentCollection extends ClientObjectCollection
             "roledefid" => $roleDefId
         ));
         $this->getContext()->addQuery($qry);
+        return $this;
     }
 }

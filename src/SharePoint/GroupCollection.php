@@ -6,14 +6,27 @@
 namespace Office365\SharePoint;
 
 use Office365\Runtime\Actions\InvokePostMethodQuery;
-use Office365\Runtime\ClientObjectCollection;
-use Office365\Runtime\ResourcePathServiceOperation;
+use Office365\Runtime\ClientObject;
+use Office365\Runtime\ClientRuntimeContext;
+use Office365\Runtime\Paths\ServiceOperationPath;
+use Office365\Runtime\ResourcePath;
 
 /**
  * Represents a collection of Group resources.
  */
-class GroupCollection extends ClientObjectCollection
+class GroupCollection extends BaseEntityCollection
 {
+
+    /**
+     * GroupCollection constructor.
+     * @param ClientRuntimeContext $ctx
+     * @param ResourcePath|null $resourcePath
+     * @param ClientObject|null $parent
+     */
+    public function __construct(ClientRuntimeContext $ctx, ResourcePath $resourcePath = null, ClientObject $parent = null)
+    {
+        parent::__construct($ctx, $resourcePath, Group::class, $parent);
+    }
 
     /**
      * Create a group
@@ -39,7 +52,7 @@ class GroupCollection extends ClientObjectCollection
     {
         return new Group(
             $this->getContext(),
-            new ResourcePathServiceOperation("getById", array($id),$this->getResourcePath())
+            new ServiceOperationPath("getById", array($id),$this->getResourcePath())
         );
     }
 
@@ -53,7 +66,7 @@ class GroupCollection extends ClientObjectCollection
     {
         return new Group(
             $this->getContext(),
-            new ResourcePathServiceOperation( "getByName", array(rawurlencode($name)), $this->getResourcePath())
+            new ServiceOperationPath( "getByName", array(rawurlencode($name)), $this->getResourcePath())
         );
     }
 

@@ -13,10 +13,8 @@ class WebTest extends SharePointTestCase
 
     public function testGetWebByAbsUrl()
     {
-        $settings = include(__DIR__ . '/../../Settings.php');
-        $pageAbsUrl = $settings["Url"] . "/sites/team/SitePages/Home.aspx";
-        $result = Web::getWebUrlFromPageUrl(self::$context,$pageAbsUrl);
-        self::$context->executeQuery();
+        $pageAbsUrl = self::$settings["Url"] . "/sites/team/SitePages/Home.aspx";
+        $result = Web::getWebUrlFromPageUrl(self::$context,$pageAbsUrl)->executeQuery();
         self::assertNotEmpty($result->getValue());
     }
 
@@ -100,8 +98,8 @@ class WebTest extends SharePointTestCase
             ->breakRoleInheritance(true)
             ->executeQuery();
 
-        $targetWeb->select("HasUniqueRoleAssignments")->get()->executeQuery();
-        self::assertTrue($targetWeb->getHasUniqueRoleAssignments());
+        $result = $targetWeb->select(["HasUniqueRoleAssignments"])->get()->executeQuery();
+        self::assertTrue($result->getHasUniqueRoleAssignments());
     }
 
     /**

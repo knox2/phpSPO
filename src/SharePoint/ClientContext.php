@@ -4,18 +4,25 @@ namespace Office365\SharePoint;
 
 use Exception;
 use Office365\Runtime\Auth\AuthenticationContext;
+use Office365\Runtime\Auth\CertificateCredentials;
 use Office365\Runtime\Auth\ClientCredential;
 use Office365\Runtime\Auth\IAuthenticationContext;
+use Office365\Runtime\Auth\NetworkCredentialContext;
 use Office365\Runtime\Auth\UserCredentials;
 use Office365\Runtime\Actions\DeleteEntityQuery;
 use Office365\Runtime\Http\HttpMethod;
 use Office365\Runtime\OData\ODataRequest;
+use Office365\Runtime\OData\V3\JsonLightFormat;
 use Office365\Runtime\ResourcePath;
 use Office365\Runtime\Actions\UpdateEntityQuery;
 use Office365\Runtime\ClientRuntimeContext;
-use Office365\Runtime\OData\JsonLightFormat;
 use Office365\Runtime\OData\ODataMetadataLevel;
 use Office365\Runtime\Http\RequestOptions;
+use Office365\SharePoint\Portal\GroupSiteManager;
+use Office365\SharePoint\Portal\SPSiteManager;
+use Office365\SharePoint\Search\SearchService;
+use Office365\SharePoint\Taxonomy\TaxonomyService;
+use Office365\SharePoint\UserProfiles\PeopleManager;
 
 /**
  * Client context for SharePoint API service
@@ -33,6 +40,35 @@ class ClientContext extends ClientRuntimeContext
     protected $web;
 
     /**
+     * @var PeopleManager
+     */
+    private $peopleManager;
+
+    /**
+     * @var GroupSiteManager
+     */
+    private $groupSiteManager;
+
+
+    /**
+     * @var SPSiteManager
+     */
+    private $siteManager;
+
+
+    /**
+     * @var SearchService
+     */
+    private $search;
+
+
+    /**
+     * @var TaxonomyService
+     */
+    private $taxonomy;
+
+
+    /**
      * @var ContextWebInformation
      */
     protected $contextWebInformation;
@@ -48,6 +84,12 @@ class ClientContext extends ClientRuntimeContext
     protected $baseUrl;
 
     /**
+     * @var IAuthenticationContext
+     */
+    protected $authContext;
+
+
+    /**
      * ClientContext constructor.
      * @param string $url Site or Web url
      * @param IAuthenticationContext $authCtx
@@ -56,9 +98,11 @@ class ClientContext extends ClientRuntimeContext
     {
         $this->baseUrl = $url;
         $this->getPendingRequest()->beforeExecuteRequest(function (RequestOptions $request) {
+            $this->authenticateRequest($request);
             $this->buildSharePointSpecificRequest($request);
         });
-        parent::__construct($authCtx);
+        $this->authContext = $authCtx;
+        parent::__construct();
     }
 
 
@@ -84,7 +128,7 @@ class ClientContext extends ClientRuntimeContext
     public function getPendingRequest()
     {
         if (!isset($this->pendingRequest)) {
-            $this->pendingRequest = new ODataRequest($this,new JsonLightFormat(ODataMetadataLevel::Verbose));
+            $this->pendingRequest = new ODataRequest(new JsonLightFormat(ODataMetadataLevel::Verbose));
         }
         return $this->pendingRequest;
     }
@@ -96,51 +140,37 @@ class ClientContext extends ClientRuntimeContext
      */
     public function withCredentials($credential)
     {
-        $this->authContext = new AuthenticationContext($this->baseUrl,function (AuthenticationContext  $authCtx) use($credential) {
-            if ($credential instanceof UserCredentials)
-                $authCtx->acquireTokenForUser($credential->Username, $credential->Password);
-            elseif ($credential instanceof ClientCredential)
-                $authCtx->acquireAppOnlyAccessToken($credential->ClientId, $credential->ClientSecret);
-            else
-                throw new Exception("Unknown credentials");
-        });
+        $this->authContext = new AuthenticationContext($this->baseUrl);
+        $this->authContext->registerProvider($credential);
         return $this;
     }
 
-
     /**
-     * Status: deprecated, prefer nowadays WithCredentials method
-     * @param string $url
-     * @param string $username
-     * @param string $password
+     * Creates authenticated SharePoint context via certificate credentials
+     *
      * @return ClientContext
-     * @throws Exception
      */
-    public static function connectWithUserCredentials($url,$username,$password)
-    {
-        $authContext = new AuthenticationContext($url);
-        $authContext->acquireTokenForUser($username, $password);
-        return new ClientContext($url,$authContext);
+    public function withClientCertificate($tenant, $clientId, $privateKey, $thumbprint, $scopes=null){
+        $this->authContext = new AuthenticationContext($this->baseUrl);
+        $this->authContext->registerProvider(
+            new CertificateCredentials($tenant, $clientId, $privateKey, $thumbprint, $scopes));
+        return $this;
     }
 
-
     /**
-     * @param string $url
-     * @param string $clientId
-     * @param string $clientSecret
-     * @return ClientContext
-     * @throws Exception
+     * NTLM authentication flow (for SharePoint On-Premises)
+     * @param UserCredentials $credential
      */
-    public static function connectWithClientCredentials($url, $clientId, $clientSecret)
-    {
-        $authCtx = new AuthenticationContext($url);
-        $authCtx->acquireAppOnlyAccessToken($clientId,$clientSecret);
-        return new ClientContext($url,$authCtx);
+    public function withNtlm($credential){
+        $this->authContext = new NetworkCredentialContext($credential->Username, $credential->Password);
+        $this->authContext->AuthType = CURLAUTH_NTLM;
+        return $this;
     }
 
     /**
      * Ensure form digest value for POST request
      * @param RequestOptions $request
+     * @throws Exception
      */
     public function ensureFormDigest(RequestOptions $request)
     {
@@ -156,20 +186,26 @@ class ClientContext extends ClientRuntimeContext
      */
     public function requestFormDigest()
     {
-        $request = new RequestOptions($this->getServiceRootUrl() . "contextinfo");
-        $request->Method = HttpMethod::Post;
-        $response = $this->executeQueryDirect($request);
+        $options = new RequestOptions($this->getServiceRootUrl() . "/contextinfo");
+        $options->Method = HttpMethod::Post;
+        $request = new ODataRequest(new JsonLightFormat(ODataMetadataLevel::Verbose));
+        $request->beforeExecuteRequest(function (RequestOptions $request) {
+            $this->authenticateRequest($request);
+        });
+        $response = $request->executeQueryDirect($options);
         if(!isset($this->contextWebInformation))
             $this->contextWebInformation = new ContextWebInformation();
         $format = new JsonLightFormat();
         $format->FunctionTag = "GetContextWebInformation";
         $payload = json_decode($response->getContent(), true);
-        $this->getPendingRequest()->mapJson($payload,$this->contextWebInformation, $format);
+        $request->mapJson($payload,$this->contextWebInformation, $format);
+        return $this;
     }
 
 
     /**
      * @param RequestOptions $request
+     * @throws Exception
      */
     private function buildSharePointSpecificRequest(RequestOptions $request){
 
@@ -177,7 +213,6 @@ class ClientContext extends ClientRuntimeContext
         if($request->Method === HttpMethod::Post) {
             $this->ensureFormDigest($request);
         }
-
         //set data modification headers
         if ($query instanceof UpdateEntityQuery) {
             $request->ensureHeader("IF-MATCH", "*");
@@ -219,6 +254,63 @@ class ClientContext extends ClientRuntimeContext
     }
 
     /**
+     * Alias to SPSiteManager
+     */
+    public function getSiteManager()
+    {
+        if(!isset($this->siteManager)){
+            $this->siteManager = new SPSiteManager($this);
+        }
+        return $this->siteManager;
+    }
+
+    /**
+     * Alias to GroupSiteManager
+     */
+    public function getGroupSiteManager()
+    {
+        if(!isset($this->groupSiteManager)){
+            $this->groupSiteManager = new GroupSiteManager($this);
+        }
+        return $this->groupSiteManager;
+    }
+
+    /**
+     * Alias to SearchService
+     */
+    public function getSearch()
+    {
+        if(!isset($this->search)){
+            $this->search = new SearchService($this);
+        }
+        return $this->search;
+    }
+
+
+    /**
+     * Alias to TaxonomyService
+     */
+    public function getTaxonomy()
+    {
+        if(!isset($this->taxonomy)){
+            $this->taxonomy = new TaxonomyService($this);
+        }
+        return $this->taxonomy;
+    }
+
+
+    /**
+     * Alias to PeopleManager
+     */
+    public function getPeopleManager()
+    {
+        if(!isset($this->peopleManager)){
+            $this->peopleManager = new PeopleManager($this);
+        }
+        return $this->peopleManager;
+    }
+
+    /**
      * @return string
      */
     public function getBaseUrl()
@@ -239,17 +331,33 @@ class ClientContext extends ClientRuntimeContext
      */
     public function getServiceRootUrl()
     {
-        return  "{$this->getBaseUrl()}/_api/";
+        return  "{$this->getBaseUrl()}/_api";
     }
 
 
     /**
      * @return RequestOptions
+     * @throws Exception
      */
     public function buildRequest()
     {
         $request = parent::buildRequest();
         $this->buildSharePointSpecificRequest($request);
         return $request;
+    }
+
+    /**
+     * @param RequestOptions $options
+     */
+    public function authenticateRequest(RequestOptions $options)
+    {
+        $this->authContext->authenticateRequest($options);
+    }
+
+    /**
+     * @return IAuthenticationContext
+     */
+    public function getAuthenticationContext(){
+        return $this->authContext;
     }
 }

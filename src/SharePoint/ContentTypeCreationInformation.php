@@ -3,6 +3,7 @@
 
 namespace Office365\SharePoint;
 use Office365\Runtime\ClientValue;
+use Office365\Runtime\ServerTypeInfo;
 
 /**
  * Specifies properties that are used as parameters to initialize a new content type.
@@ -11,12 +12,16 @@ class ContentTypeCreationInformation extends ClientValue
 {
     public function __construct()
     {
-        parent::__construct("ContentType");
+        parent::__construct();
     }
 
 
-    public function setParentId($parentId){
-        $this->ParentId = $parentId;
+    /**
+     * @return ServerTypeInfo
+     */
+    public function getServerTypeInfo()
+    {
+        return new ServerTypeInfo("SP", "ContentType");
     }
 
 
@@ -66,6 +71,6 @@ class ContentTypeCreationInformation extends ClientValue
     /**
      * @var string
      */
-    private $ParentId;
+    public $ParentId;
 
 }

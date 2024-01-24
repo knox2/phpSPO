@@ -7,7 +7,6 @@ use Office365\Runtime\Auth\UserCredentials;
 use Office365\SharePoint\ClientContext;
 use Office365\SharePoint\File;
 use Office365\SharePoint\ListCreationInformation;
-use Office365\SharePoint\ListItem;
 use Office365\SharePoint\SPList;
 use Office365\SharePoint\TemplateFileType;
 use Office365\SharePoint\Web;
@@ -23,15 +22,17 @@ abstract class SharePointTestCase extends TestCase
 
     protected static $testAccountName;
 
-    public static function setUpBeforeClass()
+    protected  static $settings;
+
+    public static function setUpBeforeClass(): void
     {
-        $settings = include(__DIR__ . '/../../Settings.php');
-        self::$testAccountName = $settings['TestAccountName'];
-        self::$context = (new ClientContext($settings['Url']))
-            ->withCredentials(new UserCredentials($settings['UserName'],$settings['Password']));
+        self::$settings = include(__DIR__ . '/../Settings.php');
+        self::$testAccountName = self::$settings['TestAccountName'];
+        self::$context = (new ClientContext(self::$settings['TeamSiteUrl']))
+            ->withCredentials(new UserCredentials(self::$settings['UserName'],self::$settings['Password']));
     }
 
-    public static function tearDownAfterClass()
+    public static function tearDownAfterClass(): void
     {
         self::$context = null;
     }
@@ -61,16 +62,12 @@ abstract class SharePointTestCase extends TestCase
      * @param $listTitle
      * @param $type
      * @return SPList
-     * @internal param ClientRuntimeContext $ctx
      */
     public static function createList(Web $web, $listTitle, $type)
     {
-        $ctx = $web->getContext();
         $info = new ListCreationInformation($listTitle);
         $info->BaseTemplate = $type;
-        $list = $web->getLists()->add($info);
-        $ctx->executeQuery();
-        return $list;
+        return $web->getLists()->add($info)->executeQuery();
     }
 
     public static function createUniqueName($prefix){
@@ -90,7 +87,7 @@ abstract class SharePointTestCase extends TestCase
         $items = [];
         $idx = 0;
         while($idx < $itemsCount){
-            $items[] = self::createListItem($targetList, $itemProperties);
+            $items[] = $targetList->addItem($itemProperties)->executeQuery();
             $idx++;
         }
         return $items;
@@ -113,23 +110,6 @@ abstract class SharePointTestCase extends TestCase
         }
 
         $fileUrl = $listFolder->getProperty("ServerRelativeUrl") . "/" . $pageName;
-        $file = $listFolder->getFiles()->addTemplateFile($fileUrl, TemplateFileType::WikiPage);
-        $ctx->executeQuery();
-        return $file;
-    }
-
-
-    /**
-     * Create list item operation
-     * @param SPList $list
-     * @param array $itemProperties
-     * @return ListItem
-     * @throws Exception
-     */
-    public static function createListItem(SPList $list, array $itemProperties){
-        $ctx = $list->getContext();
-        $item = $list->addItem($itemProperties);
-        $ctx->executeQuery();
-        return $item;
+        return $listFolder->getFiles()->addTemplateFile($fileUrl, TemplateFileType::WikiPage)->executeQuery();
     }
 }

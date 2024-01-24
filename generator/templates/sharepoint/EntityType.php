@@ -6,29 +6,23 @@ use Office365\Runtime\Actions\DeleteEntityQuery;
 use Office365\Runtime\ResourcePath;
 use Office365\Runtime\Actions\UpdateEntityQuery;
 
-class EntityType extends ClientObject
+class EntityType extends BaseEntity
 {
 
     public function getObjectProperty()
     {
-        if(!$this->isPropertyAvailable("{name}")){
-            $this->setProperty("{name}", new ClientObject($this->getContext(),
-                new ResourcePath("{name}",$this->getResourcePath())));
-        }
-        return $this->getProperty("{name}");
+        return $this->getProperty("{name}",
+            new ClientObject($this->getContext(),new ResourcePath("{name}",$this->getResourcePath())));
     }
 
     public function getValueProperty()
     {
-        if(!$this->isPropertyAvailable("{name}")){
-            return null;
-        }
         return $this->getProperty("{name}");
     }
 
     public function setValueProperty($value)
     {
-        $this->setProperty("{name}",$value,true);
+        return $this->setProperty("{name}",$value,true);
     }
 
 
@@ -36,6 +30,7 @@ class EntityType extends ClientObject
     {
         $qry = new UpdateEntityQuery($this);
         $this->getContext()->addQueryAndResultObject($qry,$this);
+        return $this;
     }
 
     public function deleteOperation()
@@ -43,6 +38,7 @@ class EntityType extends ClientObject
         $qry = new DeleteEntityQuery($this);
         $this->getContext()->addQuery($qry);
         $this->removeFromParentCollection();
+        return $this;
     }
 
 }
