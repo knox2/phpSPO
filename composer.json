@@ -1,6 +1,7 @@
 {
-    "name": "vgrem/php-spo",
-    "description": "PHP Office 365 library. It allows to performs CRUD operations against Office 365 resources via an REST/OData based API",
+    "name": "knox/php-spo",
+    "description": "Office 365 library for PHP. It allows to performs CRUD operations against Office 365 resources via an REST/OData based API",
+
     "type": "library",
     "keywords": [
         "office365",

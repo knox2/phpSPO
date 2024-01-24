@@ -32,12 +32,12 @@ class ClientContext extends ClientRuntimeContext
     /**
      * @var Site
      */
-    private $site;
+    protected $site;
 
     /**
      * @var Web
      */
-    private $web;
+    protected $web;
 
     /**
      * @var PeopleManager
@@ -71,17 +71,17 @@ class ClientContext extends ClientRuntimeContext
     /**
      * @var ContextWebInformation
      */
-    private $contextWebInformation;
+    protected $contextWebInformation;
 
     /**
      * @var ODataRequest
      */
-    private $pendingRequest;
+    protected $pendingRequest;
 
     /**
      * @var string
      */
-    private $baseUrl;
+    protected $baseUrl;
 
     /**
      * @var IAuthenticationContext
