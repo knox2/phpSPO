@@ -33,7 +33,7 @@ composer installed.
 Once composer installed, execute the following command in your project root to install this library:
 
 ```sh
-composer require vgrem/php-spo
+composer require knox/php-spo
 ```
 
 or via `composer.json` file:
@@ -41,7 +41,7 @@ or via `composer.json` file:
 ```json
 {
     "require": {
-        "vgrem/php-spo": "^2.4"
+        "knox/php-spo": "dev"
     }
 }
 ```
