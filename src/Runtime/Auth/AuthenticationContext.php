@@ -23,11 +23,6 @@ class AuthenticationContext implements IAuthenticationContext
     protected $authorityUrl;
 
     /**
-     * @var callable|null
-     */
-    protected $acquireToken;
-
-    /**
 
      * @var array
      */
