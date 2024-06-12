@@ -14,10 +14,10 @@ A REST/OData based client library for Microsoft 365.
 
 ### Status
 
-[![Total Downloads](https://poser.pugx.org/vgrem/php-spo/downloads)](https://packagist.org/packages/vgrem/php-spo)
-[![Latest Stable Version](https://poser.pugx.org/vgrem/php-spo/v/stable)](https://packagist.org/packages/vgrem/php-spo)
-[![Build Status](https://travis-ci.org/vgrem/phpSPO.svg?branch=master)](https://travis-ci.org/vgrem/phpSPO)
-[![License](https://poser.pugx.org/vgrem/php-spo/license)](https://packagist.org/packages/vgrem/php-spo)
+[![Total Downloads](https://poser.pugx.org/knox/php-spo/downloads)](https://packagist.org/packages/knox/php-spo)
+[![Latest Stable Version](https://poser.pugx.org/knox/php-spo/v/stable)](https://packagist.org/packages/knox/php-spo)
+[![Build Status](https://travis-ci.org/knox/phpSPO.svg?branch=master)](https://travis-ci.org/knox/phpSPO)
+[![License](https://poser.pugx.org/knox/php-spo/license)](https://packagist.org/packages/knox/php-spo)
 
 
 ### Installation
@@ -33,7 +33,7 @@ composer installed.
 Once composer installed, execute the following command in your project root to install this library:
 
 ```sh
-composer require vgrem/php-spo
+composer require knox/php-spo
 ```
 
 or via `composer.json` file:
@@ -41,7 +41,7 @@ or via `composer.json` file:
 ```json
 {
     "require": {
-        "vgrem/php-spo": "^3"
+        "knox/php-spo": "dev"
     }
 }
 ```
@@ -81,7 +81,7 @@ The following auth flows supported:
 
 Documentation:
 
-- [wiki](https://github.com/vgrem/phpSPO/wiki/How-to-connect-to-SharePoint-Online-and-and-SharePoint-2013-2016-2019-on-premises--with-app-principal)
+- [wiki](https://github.com/knox/phpSPO/wiki/How-to-connect-to-SharePoint-Online-and-and-SharePoint-2013-2016-2019-on-premises--with-app-principal)
 - [Granting access using SharePoint App-Only](https://docs.microsoft.com/en-us/sharepoint/dev/solution-guidance/security-apponly-azureacs)
 
 #### 2. app principal with client certificate:
@@ -102,7 +102,7 @@ $ctx = (new ClientContext("{siteUrl}"))->withClientCertificate(
 
 Documentation:
 
-- [wiki](https://github.com/vgrem/phpSPO/wiki/Granting-access-via-Azure-AD-App%E2%80%90Only-with-Certificate) 
+- [wiki](https://github.com/knox/phpSPO/wiki/Granting-access-via-Azure-AD-App%E2%80%90Only-with-Certificate) 
 - [Granting access using SharePoint App-Only](https://docs.microsoft.com/en-us/sharepoint/dev/solution-guidance/security-apponly-azureacs) 
 
 
