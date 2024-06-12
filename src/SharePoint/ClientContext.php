@@ -32,56 +32,56 @@ class ClientContext extends ClientRuntimeContext
     /**
      * @var Site
      */
-    private $site;
+    protected $site;
 
     /**
      * @var Web
      */
-    private $web;
+    protected $web;
 
     /**
      * @var PeopleManager
      */
-    private $peopleManager;
+    protected $peopleManager;
 
     /**
      * @var GroupSiteManager
      */
-    private $groupSiteManager;
+    protected $groupSiteManager;
 
 
     /**
      * @var SPSiteManager
      */
-    private $siteManager;
+    protected $siteManager;
 
 
     /**
      * @var SearchService
      */
-    private $search;
+    protected $search;
 
 
     /**
      * @var TaxonomyService
      */
-    private $taxonomy;
+    protected $taxonomy;
 
 
     /**
      * @var ContextWebInformation
      */
-    private $contextWebInformation;
+    protected $contextWebInformation;
 
     /**
      * @var ODataRequest
      */
-    private $pendingRequest;
+    protected $pendingRequest;
 
     /**
      * @var string
      */
-    private $baseUrl;
+    protected $baseUrl;
 
     /**
      * @var IAuthenticationContext
