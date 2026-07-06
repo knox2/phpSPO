@@ -2,9 +2,12 @@
 
 
 namespace Office365\Runtime\OData;
+use FilesystemIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use ReflectionClass;
 use ReflectionException;
-
+use RuntimeException;
 
 
 class ODataModel
@@ -253,6 +256,7 @@ class ODataModel
      */
     public function getTypeInfo($typeName)
     {
+
         if (array_key_exists($typeName, $this->options['typeMappings'])) {
             $typeName = $this->options['typeMappings'][$typeName];
         }
@@ -271,20 +275,82 @@ class ODataModel
             $typeName = $itemTypeName . "Collection";
             $collection = true;
         }
+
         $parts = explode('.', $typeName);
-        $parts[0] = $this->options['rootNamespace'];
-        $typeAlias = array_pop($parts);
-        $namespace = implode("\\",array_filter($parts));
-        $filePath = implode(DIRECTORY_SEPARATOR,array_filter([str_replace($this->options['rootNamespace'],"",$namespace),$typeAlias . ".php"]));
+        $className = array_pop($parts);
+
+        $relativeNamespace = implode('.', $parts);
+        foreach ($this->options['entityNamespaces'] as $nsType) {
+            $relativeNamespace = str_replace($nsType, '', $relativeNamespace);
+        }
+        $relativeNamespace = trim($relativeNamespace, '.');
+        $relativeNamespace = str_replace('.', '\\', $relativeNamespace);
+
+
+        $filePath = implode(DIRECTORY_SEPARATOR,array_filter([$this->options['outputPath'], $relativeNamespace,$className . ".php"]));
+        if (!file_exists($filePath)) {
+            $filePath = $this->resolveFile($typeName) ?? $filePath;
+
+            $relativeNamespace = str_replace(
+                    "/", "\\",
+                    substr(dirname($filePath), strlen($this->options['outputPath']) + 1)
+            );
+        }
+        $fullNamespace = trim($this->options['rootNamespace'] . '\\' . $relativeNamespace, '\\');
 
         return array(
-            'alias' => $typeAlias,
-            'name' => implode("\\",[$namespace,$typeAlias]),
-            'file' => implode(DIRECTORY_SEPARATOR,[$this->options['outputPath'],$filePath]),
-            'namespace' => $namespace,
+            'alias' => $className,
+            'name' => implode("\\",[$fullNamespace,$className]),
+            'file' => $filePath,
+            'namespace' => $fullNamespace,
             'primitive' => false,
             'collection' => $collection
         );
+    }
+
+    private function resolveFile(string $typeName)
+    {
+        $path = $this->options['outputPath'];
+        $parts = explode('.', $typeName);
+        $className = array_pop($parts);
+        $expectedFilename = $className . '.php';
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        $matches = [];
+        foreach ($iterator as $file) {
+            if ($file->isFile() && $file->getFilename() === $expectedFilename) {
+                $matches[] = $file->getPathname();
+            }
+        }
+
+        if (count($matches) === 0) {
+            return null;
+        }
+
+        if (count($matches) === 1) {
+            return $matches[0];
+        }
+
+        $expectedPath = $this->options['modelFileMappings'][$typeName];
+        if($expectedPath){
+            $expectedPath = realpath($expectedPath);
+            if (in_array($expectedPath, $matches)) {
+                return $expectedPath;
+            }
+        }
+
+        $message = sprintf(
+            'Multiple files found for "%s": %s',
+            $expectedFilename,
+            implode(', ', $matches)
+        );
+        throw new RuntimeException($message);
+        //error_log($message);
+        //return null;
     }
 
 

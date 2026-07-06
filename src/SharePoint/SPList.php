@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Generated  2024-02-24T10:21:51+00:00 16.0.24607.12008
+ * Generated  2025-08-15T21:03:47+00:00 16.0.26330.12011
  */
 namespace Office365\SharePoint;
 
@@ -60,7 +60,7 @@ class SPList extends SecurableObject
      * @param CamlQuery $camlQuery
      * @return ListItemCollection
      */
-    public function getItems(CamlQuery $camlQuery = null)
+    public function getItems(?CamlQuery $camlQuery = null)
     {
         $targetItems = new ListItemCollection($this->getContext(), new ResourcePath("items", $this->getResourcePath()));
         if (is_null($camlQuery)) {
@@ -1699,5 +1699,33 @@ class SPList extends SecurableObject
     public function setIsContributorOwnerEnabled($value)
     {
         return $this->setProperty("IsContributorOwnerEnabled", $value, true);
+    }
+    /**
+     * @return bool
+     */
+    public function getExcludeFromOfflineMode()
+    {
+        return $this->getProperty("ExcludeFromOfflineMode");
+    }
+    /**
+     * @var bool
+     */
+    public function setExcludeFromOfflineMode($value)
+    {
+        return $this->setProperty("ExcludeFromOfflineMode", $value, true);
+    }
+    /**
+     * @return bool
+     */
+    public function getShowOneTabOnly()
+    {
+        return $this->getProperty("ShowOneTabOnly");
+    }
+    /**
+     * @var bool
+     */
+    public function setShowOneTabOnly($value)
+    {
+        return $this->setProperty("ShowOneTabOnly", $value, true);
     }
 }

@@ -6,7 +6,7 @@ use Office365\Generator\Builders\TemplateContext;
 use Office365\Generator\Builders\TypeBuilder;
 use Office365\Generator\Documentation\MSGraphDocsService;
 use Office365\Generator\Documentation\SharePointSpecsService;
-use Office365\Runtime\Auth\UserCredentials;
+use Office365\Runtime\Auth\ClientCredential;
 use Office365\Runtime\Http\RequestException;
 use Office365\Runtime\OData\MetadataResolver;
 use Office365\Runtime\OData\ODataModel;
@@ -40,7 +40,7 @@ function generateTypeFile(array $typeSchema, array $options)
     }
 }
 
-function ensureFolder(&$path)
+function ensureFolder(string &$path)
 {
     if (!is_dir($path)) {
         mkdir($path, 0777, true);
@@ -68,7 +68,7 @@ function generateFiles(ODataModel $model)
  * @param string $fileName
  * @return array
  */
-function loadSettingsFromFile($fileName)
+function loadSettingsFromFile(string $fileName): array
 {
     $settings = json_decode(file_get_contents($fileName), true);
     $settings['timestamp'] = date('c');
@@ -100,9 +100,9 @@ function generateOutlookServicesModel()
     generateFiles($model);
 }
 
-function generateMicrosoftGraphModel()
+function generateGraphModel()
 {
-    $options = loadSettingsFromFile('./Settings.MicrosoftGraph.json');
+    $options = loadSettingsFromFile('./Settings.Graph.json');
     $options['docs'] = new MSGraphDocsService();
     $reader = new ODataV4Reader();
     $model = $reader->generateModel($options);
@@ -119,10 +119,10 @@ function saveMetadataFile($xml, $metadataPath){
 }
 
 
-function syncSharePointMetadataFile($fileName){
-    $Settings = include('../tests/Settings.php');
-    $credentials = new UserCredentials($Settings['UserName'], $Settings['Password']);
-    $ctx = (new ClientContext($Settings['Url']))->withCredentials($credentials);
+function syncSharePointMetadataFile(string $fileName){
+    $settings = include('../tests/Settings.php');
+    $credentials = new ClientCredential($settings['ClientId'], $settings['ClientSecret']); //new UserCredentials($Settings['UserName'], $Settings['Password']);
+    $ctx = (new ClientContext($settings['Url']))->withCredentials($credentials);
     $ctx->requestFormDigest()->executeQuery();
     $latestVersion = $ctx->getContextWebInformation()->LibraryVersion;
 
@@ -152,8 +152,8 @@ try {
         case "OutlookServices":
             generateOutlookServicesModel();
             break;
-        case "MicrosoftGraph":
-            generateMicrosoftGraphModel();
+        case "Graph":
+            generateGraphModel();
             break;
     }
 

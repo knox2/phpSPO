@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Generated  2023-09-30T09:13:50+00:00 16.0.24106.12014
+ * Generated  2025-08-15T21:03:47+00:00 16.0.26330.12011
  */
 namespace Office365\SharePoint\Publishing;
 
@@ -64,4 +64,16 @@ class CopyToParams extends ClientValue
      * @var string
      */
     public $ScenarioPayload;
+    /**
+     * @var bool
+     */
+    public $CreateCopyWithTitleSuffix;
+    /**
+     * @var array
+     */
+    public $DependencyPropertyTypesToDeepCopy;
+    /**
+     * @var bool
+     */
+    public $ShouldAddFallbackLinkForVideoForAmplify;
 }

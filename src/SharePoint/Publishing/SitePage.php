@@ -1,11 +1,12 @@
 <?php
 
 /**
- * Generated  2024-03-17T10:39:33+00:00 16.0.24628.12008
+ * Generated  2025-08-18T13:00:23+00:00 16.0.26330.12013
  */
 namespace Office365\SharePoint\Publishing;
 
 use Office365\Runtime\ClientObject;
+use Office365\SharePoint\CoAuthConfiguration;
 class SitePage extends ClientObject
 {
     /**
@@ -203,5 +204,103 @@ class SitePage extends ClientObject
     public function setBoostProperties($value)
     {
         return $this->setProperty("BoostProperties", $value, true);
+    }
+    /**
+     * @return string
+     */
+    public function getPublicationMetadata()
+    {
+        return $this->getProperty("PublicationMetadata");
+    }
+    /**
+     * @var string
+     */
+    public function setPublicationMetadata($value)
+    {
+        return $this->setProperty("PublicationMetadata", $value, true);
+    }
+    /**
+     * @return string
+     */
+    public function getPublicationRecipients()
+    {
+        return $this->getProperty("PublicationRecipients");
+    }
+    /**
+     * @var string
+     */
+    public function setPublicationRecipients($value)
+    {
+        return $this->setProperty("PublicationRecipients", $value, true);
+    }
+    /**
+     * @return string
+     */
+    public function getCampaignMetadata()
+    {
+        return $this->getProperty("CampaignMetadata");
+    }
+    /**
+     * @var string
+     */
+    public function setCampaignMetadata($value)
+    {
+        return $this->setProperty("CampaignMetadata", $value, true);
+    }
+    /**
+     * @return string
+     */
+    public function getSourceDynamicSectionId()
+    {
+        return $this->getProperty("SourceDynamicSectionId");
+    }
+    /**
+     * @var string
+     */
+    public function setSourceDynamicSectionId($value)
+    {
+        return $this->setProperty("SourceDynamicSectionId", $value, true);
+    }
+    /**
+     * @return AmplifyPublishingHistory
+     */
+    public function getAmplifyPublishingHistory()
+    {
+        return $this->getProperty("AmplifyPublishingHistory");
+    }
+    /**
+     * @var AmplifyPublishingHistory
+     */
+    public function setAmplifyPublishingHistory($value)
+    {
+        return $this->setProperty("AmplifyPublishingHistory", $value, true);
+    }
+    /**
+     * @return CoAuthConfiguration
+     */
+    public function getCoAuthTenantConfiguration()
+    {
+        return $this->getProperty("CoAuthTenantConfiguration");
+    }
+    /**
+     * @var CoAuthConfiguration
+     */
+    public function setCoAuthTenantConfiguration($value)
+    {
+        return $this->setProperty("CoAuthTenantConfiguration", $value, true);
+    }
+    /**
+     * @return SitePageCoAuthState
+     */
+    public function getCoAuthState()
+    {
+        return $this->getProperty("CoAuthState");
+    }
+    /**
+     * @var SitePageCoAuthState
+     */
+    public function setCoAuthState($value)
+    {
+        return $this->setProperty("CoAuthState", $value, true);
     }
 }

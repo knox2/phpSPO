@@ -7,12 +7,24 @@ namespace Office365\Planner\Plans;
 
 use Office365\Directory\Identities\IdentitySet;
 use Office365\Entity;
+use Office365\Planner\Buckets\PlannerBucketCollection;
+use Office365\Planner\Tasks\PlannerTaskCollection;
+use Office365\Runtime\Http\RequestOptions;
 use Office365\Runtime\ResourcePath;
 /**
  * The **plannerPlan** resource represents a plan in Office 365. A plan can be owned by a [group](group.md) and contains a collection of [plannerTasks](plannertask.md). It can also have a collection of [plannerBuckets](plannerbucket.md). Each plan object has a [details](plannerplandetails.md) object that can contain more information about the plan. For more information about the relationships between groups, plans, and tasks, see [Planner](planner-overview.md).
  */
 class PlannerPlan extends Entity
 {
+
+    /**
+     * @return string
+     */
+    public function getEtag()
+    {
+        return $this->getProperty("Etag");
+    }
+
     /**
      * Read-only. The user who created the plan.
      * @return IdentitySet
@@ -69,5 +81,37 @@ class PlannerPlan extends Entity
     {
         return $this->getProperty("Details",
             new PlannerPlanDetails($this->getContext(),new ResourcePath("Details", $this->getResourcePath())));
+    }
+
+    /**
+     * @return PlannerTaskCollection
+     */
+    public function getTasks()
+    {
+        return $this->getProperty("Tasks",
+            new PlannerTaskCollection($this->getContext(),
+                new ResourcePath("Tasks", $this->getResourcePath()), $this));
+    }
+
+    /**
+     * @return PlannerBucketCollection
+     */
+    public function getBuckets()
+    {
+        return $this->getProperty("Buckets",
+            new PlannerBucketCollection($this->getContext(),
+                new ResourcePath("Buckets", $this->getResourcePath()), $this));
+    }
+
+    /**
+     * @return $this
+     */
+    public function deleteObject()
+    {
+        parent::deleteObject();
+        $this->getContext()->getPendingRequest()->beforeExecuteRequestOnce(function (RequestOptions $request) {
+            $request->Headers["If-Match"] = $this->getEtag();
+        });
+        return $this;
     }
 }

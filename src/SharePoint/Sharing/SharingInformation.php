@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Generated  2024-04-20T08:07:39+00:00 16.0.24803.12007
+ * Generated  2025-08-15T21:03:47+00:00 16.0.26330.12011
  */
 namespace Office365\SharePoint\Sharing;
 
@@ -906,5 +906,33 @@ class SharingInformation extends ClientObject
     public function setdiscoverableByOrganizationEnabled($value)
     {
         return $this->setProperty("discoverableByOrganizationEnabled", $value, true);
+    }
+    /**
+     * @return bool
+     */
+    public function getisMultiTenantOrganization()
+    {
+        return $this->getProperty("isMultiTenantOrganization");
+    }
+    /**
+     * @var bool
+     */
+    public function setisMultiTenantOrganization($value)
+    {
+        return $this->setProperty("isMultiTenantOrganization", $value, true);
+    }
+    /**
+     * @return UniqueAccessGroupsWrapper
+     */
+    public function getuniqueAccessGroups()
+    {
+        return $this->getProperty("uniqueAccessGroups");
+    }
+    /**
+     * @var UniqueAccessGroupsWrapper
+     */
+    public function setuniqueAccessGroups($value)
+    {
+        return $this->setProperty("uniqueAccessGroups", $value, true);
     }
 }

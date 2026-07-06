@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Generated  2024-04-20T08:07:39+00:00 16.0.24803.12007
+ * Generated  2025-08-15T21:03:47+00:00 16.0.26330.12011
  */
 namespace Office365\SharePoint;
 
@@ -1473,5 +1473,131 @@ class Site extends BaseEntity
     public function setRestrictedAccessControlGroupsEnforcedOnSite($value)
     {
         return $this->setProperty("RestrictedAccessControlGroupsEnforcedOnSite", $value, true);
+    }
+    /**
+     * @return bool
+     */
+    public function getIsRestrictContentOrgWideSearchPolicyEnforcedOnSite()
+    {
+        return $this->getProperty("IsRestrictContentOrgWideSearchPolicyEnforcedOnSite");
+    }
+    /**
+     * @var bool
+     */
+    public function setIsRestrictContentOrgWideSearchPolicyEnforcedOnSite($value)
+    {
+        return $this->setProperty("IsRestrictContentOrgWideSearchPolicyEnforcedOnSite", $value, true);
+    }
+    /**
+     * @return bool
+     */
+    public function getIsExternalWorkspace()
+    {
+        return $this->getProperty("IsExternalWorkspace");
+    }
+    /**
+     * @var bool
+     */
+    public function setIsExternalWorkspace($value)
+    {
+        return $this->setProperty("IsExternalWorkspace", $value, true);
+    }
+    /**
+     * @return bool
+     */
+    public function getIsRubySite()
+    {
+        return $this->getProperty("IsRubySite");
+    }
+    /**
+     * @var bool
+     */
+    public function setIsRubySite($value)
+    {
+        return $this->setProperty("IsRubySite", $value, true);
+    }
+    /**
+     * @return bool
+     */
+    public function getIsScheduledForRemoval()
+    {
+        return $this->getProperty("IsScheduledForRemoval");
+    }
+    /**
+     * @var bool
+     */
+    public function setIsScheduledForRemoval($value)
+    {
+        return $this->setProperty("IsScheduledForRemoval", $value, true);
+    }
+    /**
+     * @return bool
+     */
+    public function getIsUnlicensedOdb()
+    {
+        return $this->getProperty("IsUnlicensedOdb");
+    }
+    /**
+     * @var bool
+     */
+    public function setIsUnlicensedOdb($value)
+    {
+        return $this->setProperty("IsUnlicensedOdb", $value, true);
+    }
+    /**
+     * @return string
+     */
+    public function getScheduledDateForRemoval()
+    {
+        return $this->getProperty("ScheduledDateForRemoval");
+    }
+    /**
+     * @var string
+     */
+    public function setScheduledDateForRemoval($value)
+    {
+        return $this->setProperty("ScheduledDateForRemoval", $value, true);
+    }
+    /**
+     * @return string
+     */
+    public function getUnifiedDomainUrl()
+    {
+        return $this->getProperty("UnifiedDomainUrl");
+    }
+    /**
+     * @var string
+     */
+    public function setUnifiedDomainUrl($value)
+    {
+        return $this->setProperty("UnifiedDomainUrl", $value, true);
+    }
+    /**
+     * @return bool
+     */
+    public function getIsRestrictedContentDiscoveryforCopilotAndAgentsEnabled()
+    {
+        return $this->getProperty("IsRestrictedContentDiscoveryforCopilotAndAgentsEnabled");
+    }
+    /**
+     * @var bool
+     */
+    public function setIsRestrictedContentDiscoveryforCopilotAndAgentsEnabled($value)
+    {
+        return $this->setProperty("IsRestrictedContentDiscoveryforCopilotAndAgentsEnabled", $value, true);
+    }
+    /**
+     * @return RestrictContentOrgWidePolicyUpdate
+     */
+    public function getRestrictContentOrgWideSearchUpdate()
+    {
+        return $this->getProperty("RestrictContentOrgWideSearchUpdate");
+    }
+    /**
+     * @var RestrictContentOrgWidePolicyUpdate
+     */
+    public function setRestrictContentOrgWideSearchUpdate($value)
+    {
+        return $this->setProperty("RestrictContentOrgWideSearchUpdate", $value, true);
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Generated  2023-01-13T18:22:53+02:00 16.0.23207.12005
+ * Generated  2025-08-18T13:00:23+00:00 16.0.26330.12013
  */
 namespace Office365\SharePoint\Publishing;
 
@@ -12,4 +12,12 @@ class SharePointPublishingStatusResponse extends ClientValue
      * @var string
      */
     public $SiteId;
+    /**
+     * @var string
+     */
+    public $WebId;
+    /**
+     * @var SharePointPublishingStatus
+     */
+    public $Status;
 }

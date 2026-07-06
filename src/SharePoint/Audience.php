@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Generated  2023-09-30T09:13:50+00:00 16.0.24106.12014
+ * Generated  2025-08-18T12:58:25+00:00 16.0.26330.12013
  */
 namespace Office365\SharePoint;
 
@@ -11,13 +11,13 @@ class Audience extends ClientValue
     /**
      * @var string
      */
-    public $Email;
-    /**
-     * @var string
-     */
     public $Id;
     /**
      * @var string
      */
     public $Title;
+    /**
+     * @var string
+     */
+    public $Email;
 }

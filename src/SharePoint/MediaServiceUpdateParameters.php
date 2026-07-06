@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Generated  2024-06-08T09:12:30+00:00 16.0.24922.12004
+ * Generated  2025-08-15T21:03:47+00:00 16.0.26330.12011
  */
 namespace Office365\SharePoint;
 
@@ -156,4 +156,36 @@ class MediaServiceUpdateParameters extends ClientValue
      * @var bool
      */
     public $IsLowPriorityRequest;
+    /**
+     * @var string
+     */
+    public $MediaServiceBillingMetadata;
+    /**
+     * @var bool
+     */
+    public $SkipSearchReindex;
+    /**
+     * @var string
+     */
+    public $AgreementClauses;
+    /**
+     * @var string
+     */
+    public $GeneratedSnippetShortInstructions;
+    /**
+     * @var string
+     */
+    public $TranslatedLang;
+    /**
+     * @var SPAgreementResults
+     */
+    public $AgreementResults;
+    /**
+     * @var string
+     */
+    public $DigitalSignatureProvider;
+    /**
+     * @var string
+     */
+    public $HasDigitalSignature;
 }
